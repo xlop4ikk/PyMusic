@@ -1,9 +1,10 @@
 import tkinter as tk
+import string
+import random
 from tkinter import END
+from tkinter import filedialog
 import requests
 from bs4 import BeautifulSoup as BS
-import webbrowser
-"""Приложение разработано на Python. Пользователь вписывает в textbox_1 исполнителя, во второй - путь, где будет создаваться .html файл с текстом выбранной песни (при добавлении каталога следует дописать название самого файла до .html)"""
 
 #-----------------------------------------------------------
 # Создание формы
@@ -14,7 +15,7 @@ link_lst = []
 
 root = tk.Tk()
 root.title("PyMusic")
-root.geometry("380x560")
+root.geometry("380x620")
 root.resizable(False, False)
 root.configure(bg="white")
 
@@ -22,7 +23,7 @@ label_1 = tk.Label(root, text="Введите имя исполнителя:", b
 text_box_1 = tk.Entry(root, width=30)
 editor = tk.Text(height=5)
 
-label_2 = tk.Label(root, text="Введите каталог для скачивания:", bg="white", fg="black", font="Consolas")
+label_2 = tk.Label(root, text="Каталог для скачивания:", bg="white", fg="black", font="Consolas")
 text_box_2 = tk.Entry(root, width=30)
 
 label_3 = tk.Label(root, text="Все треки:", bg="white", fg="black", font="Consolas")
@@ -44,6 +45,17 @@ def singer_name():
         lst.append(tableRow.text)
     for element in (lst):
         list_box_3.insert(0, element)
+        
+#-----------------------------------------------------------
+# Диалоговое окно выбора каталога для сохранения файла
+#-----------------------------------------------------------
+
+def folder_choose():
+    filepath = filedialog.askdirectory()
+    if filepath == "":
+        print('Вы ничего не выбрали!')
+    else:
+        text_box_2.insert(0, filepath)
 
 #-----------------------------------------------------------
 # Получение текста песни
@@ -52,6 +64,8 @@ def singer_name():
 def music_open():
     singer_name = text_box_1.get()
     music_url = f'https://pesni.guru/search/{singer_name}'
+    letters = string.ascii_lowercase
+    file_name = ''.join(random.choice(letters) for i in range(10))
     music_url_2 = None
     response = requests.get(music_url)
     soup = BS(response.content, 'html.parser') 
@@ -62,15 +76,13 @@ def music_open():
     link_lst.reverse()
     for i in range(0, len(link_lst)):
         if selection == i:
-            #webbrowser.open(f'https://pesni.guru{link_lst[i]}', new=0, autoraise=True)
             music_url_2 = f'https://pesni.guru{link_lst[i]}'
     # Считывание самого текста
     response_2 = requests.get(music_url_2)
     soup_2 = BS(response_2.content, 'html.parser') 
-    #articles_div = soup_2.find('div', class_='songtext').get_text()
     articles_div = soup_2.find('div', class_='songtext')
     folder = text_box_2.get()
-    my_file = open(f"{folder}.html", "w+", encoding="utf-8")
+    my_file = open(f"{folder}/{file_name}.html", "w+", encoding="utf-8")
     my_file.write(f'''<html>
                     <head>
                     <title>text</title>
@@ -96,8 +108,9 @@ def clear():
 #-----------------------------------------------------------
 
 button_1 = tk.Button(root, text="Поиск!", command=singer_name)
-button_2 = tk.Button(root, text="Создать текстовый файл!", command=music_open)
-button_3 = tk.Button(root, text="Очистить!", command=clear)
+button_2 = tk.Button(root, text="Выбор каталога!", command=folder_choose)
+button_3 = tk.Button(root, text="Создать текстовый файл!", command=music_open)
+button_4 = tk.Button(root, text="Очистить!", command=clear)
 label_1.pack()
 text_box_1.pack()
 label_2.pack()
@@ -107,5 +120,6 @@ list_box_3.pack()
 button_1.pack(ipadx=20, ipady=8, pady=5, side= "top")
 button_2.pack(ipadx=20, ipady=8, pady=5, side= "top")
 button_3.pack(ipadx=20, ipady=8, pady=5, side= "top")
+button_4.pack(ipadx=20, ipady=8, pady=5, side= "top")
 
 root.mainloop()
